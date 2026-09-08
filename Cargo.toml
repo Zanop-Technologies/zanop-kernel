@@ -1,0 +1,25 @@
+[package]
+name = "zanop-kernel"
+version = "0.1.0"
+edition = "2021"
+authors = ["Zanop Technologies"]
+description = "The Zanop OS kernel (terminal-only)"
+license-file = "LICENSE"
+
+[[bin]]
+name = "zanop-kernel"
+path = "src/main.rs"
+
+[dependencies]
+# Placeholder — common no_std kernel crates you'll likely want:
+# spin = "0.9"          # spinlocks (no_std mutexes)
+# volatile = "0.4"      # safe volatile memory access (VGA buffer etc.)
+# x86_64 = "0.14"       # x86_64 register/paging/interrupt abstractions
+# lazy_static = { version = "1.4", features = ["spin_no_std"] }
+
+[profile.dev]
+panic = "abort"   # required — no unwinding support in no_std
+
+[profile.release]
+panic = "abort"
+lto = 

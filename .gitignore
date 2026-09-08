@@ -1,0 +1,19 @@
+# Rust build artifacts
+/target/
+Cargo.lock
+
+# OS-dev build outputs
+*.iso
+*.img
+*.bin
+*.o
+*.elf
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+
+# OS-specific
+.DS_Store
+Thumbs.db
