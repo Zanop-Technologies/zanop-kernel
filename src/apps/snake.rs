@@ -36,18 +36,22 @@ pub fn run() {
 
     loop {
         // ---- input ----
-        let scancode = keyboard::read_scancode();
-        if let Some(ascii) = keyboard::scancode_to_ascii(scancode) {
-            dir = match ascii {
-                b'w' | b'W' => Dir::Up,
-                b's' | b'S' => Dir::Down,
-                b'a' | b'A' => Dir::Left,
-                b'd' | b'D' => Dir::Right,
-                _ => {
-                    println!("Closing Snake. Final score: {}", score);
-                    return;
-                }
-            };
+        // Non-blocking now that read_scancode() genuinely blocks for a
+        // real event -- the snake needs to keep moving every tick
+        // whether or not a key was pressed this frame.
+        if let Some(scancode) = keyboard::try_read_scancode() {
+            if let Some(ascii) = keyboard::scancode_to_ascii(scancode) {
+                dir = match ascii {
+                    b'w' | b'W' => Dir::Up,
+                    b's' | b'S' => Dir::Down,
+                    b'a' | b'A' => Dir::Left,
+                    b'd' | b'D' => Dir::Right,
+                    _ => {
+                        println!("Closing Snake. Final score: {}", score);
+                        return;
+                    }
+                };
+            }
         }
 
         // ---- move ----

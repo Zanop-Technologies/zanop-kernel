@@ -15,17 +15,15 @@ pub fn run() {
             t.year, t.month, t.day, t.hours, t.minutes, t.seconds
         );
 
-        // Exit on any keypress; otherwise keep refreshing.
-        let scancode = keyboard::read_scancode();
-        if scancode != 0 {
+        // Non-blocking check now that read_scancode() genuinely blocks
+        // for a real event -- this keeps the clock ticking every loop
+        // instead of freezing until a keypress arrives.
+        if keyboard::try_read_scancode().is_some() {
             println!();
             println!("Closing Clock.");
             return;
         }
 
-        // Small busy-wait so the display doesn't flicker faster than the
-        // RTC's 1-second resolution actually changes. Not a precise
-        // delay — there's no timer interrupt to base one on yet.
         for _ in 0..2_000_000 {
             unsafe { core::arch::asm!("nop") };
         }
