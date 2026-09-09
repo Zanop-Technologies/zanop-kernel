@@ -8,6 +8,9 @@ mod drivers;
 mod memory;
 mod panic;
 mod task;
+mod fs;
+mod shell;
+mod apps;
 
 use core::panic::PanicInfo;
 
@@ -22,11 +25,8 @@ pub extern "C" fn kernel_main() -> ! {
     task::init();
 
     // TODO: enable interrupts once IDT handlers are fully wired
-    // TODO: main kernel loop / shell
 
-    loop {
-        unsafe { core::arch::asm!("hlt") };
-    }
+    shell::run()
 }
 
 #[panic_handler]

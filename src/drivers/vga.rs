@@ -1,5 +1,7 @@
 use core::fmt;
 use volatile::Volatile;
+use spin::Mutex;
+use lazy_static::lazy_static;
 
 const VGA_WIDTH: usize = 80;
 const VGA_HEIGHT: usize = 25;
@@ -37,6 +39,7 @@ struct Buffer {
 }
 
 pub struct Writer {
+    row: usize,
     col: usize,
     color_code: ColorCode,
     buffer: &'static mut Buffer,
@@ -46,11 +49,12 @@ impl Writer {
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
+            0x08 => self.backspace(), // backspace
             byte => {
                 if self.col >= VGA_WIDTH {
                     self.new_line();
                 }
-                let row = VGA_HEIGHT - 1;
+                let row = self.row;
                 let col = self.col;
                 self.buffer.chars[row][col].write(ScreenChar {
                     ascii_char: byte,
@@ -64,20 +68,36 @@ impl Writer {
     pub fn write_string(&mut self, s: &str) {
         for byte in s.bytes() {
             match byte {
-                0x20..=0x7e | b'\n' => self.write_byte(byte),
+                0x20..=0x7e | b'\n' | 0x08 => self.write_byte(byte),
                 _ => self.write_byte(0xfe), // unprintable -> block char
             }
         }
     }
 
-    fn new_line(&mut self) {
-        for row in 1..VGA_HEIGHT {
-            for col in 0..VGA_WIDTH {
-                let ch = self.buffer.chars[row][col].read();
-                self.buffer.chars[row - 1][col].write(ch);
-            }
+    fn backspace(&mut self) {
+        if self.col > 0 {
+            self.col -= 1;
+            let row = self.row;
+            let col = self.col;
+            self.buffer.chars[row][col].write(ScreenChar {
+                ascii_char: b' ',
+                color_code: self.color_code,
+            });
         }
-        self.clear_row(VGA_HEIGHT - 1);
+    }
+
+    fn new_line(&mut self) {
+        if self.row < VGA_HEIGHT - 1 {
+            self.row += 1;
+        } else {
+            for row in 1..VGA_HEIGHT {
+                for col in 0..VGA_WIDTH {
+                    let ch = self.buffer.chars[row][col].read();
+                    self.buffer.chars[row - 1][col].write(ch);
+                }
+            }
+            self.clear_row(VGA_HEIGHT - 1);
+        }
         self.col = 0;
     }
 
@@ -86,6 +106,14 @@ impl Writer {
         for col in 0..VGA_WIDTH {
             self.buffer.chars[row][col].write(blank);
         }
+    }
+
+    pub fn clear_screen(&mut self) {
+        for row in 0..VGA_HEIGHT {
+            self.clear_row(row);
+        }
+        self.row = 0;
+        self.col = 0;
     }
 }
 
@@ -96,14 +124,32 @@ impl fmt::Write for Writer {
     }
 }
 
-pub fn init() {
-    // writer is constructed lazily via print! macro (see below)
-}
-
-pub fn writer() -> Writer {
-    Writer {
+lazy_static! {
+    pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
+        row: 0,
         col: 0,
         color_code: ColorCode::new(Color::LightGray, Color::Black),
         buffer: unsafe { &mut *(VGA_BUFFER_ADDR as *mut Buffer) },
-    }
+    });
+}
+
+pub fn init() {
+    WRITER.lock().clear_screen();
+}
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::drivers::vga::_print(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    use fmt::Write;
+    WRITER.lock().write_fmt(args).unwrap();
 }
