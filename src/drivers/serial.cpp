@@ -1,46 +1,43 @@
 #include "serial.hpp"
+#include <cstdint>
 
+namespace serial {
 namespace {
 
-constexpr uint16_t SERIAL_PORT = 0x3F8;
+constexpr std::uint16_t SERIAL_PORT = 0x3F8;
 
-bool is_transmit_empty() {
-    return __builtin_ia32_inb(SERIAL_PORT + 5) & 0x20;
+inline void outb(std::uint16_t port, std::uint8_t val) {
+    asm volatile("out %0, %1" : : "a"(val), "Nd"(port));
+}
+inline std::uint8_t inb(std::uint16_t port) {
+    std::uint8_t val;
+    asm volatile("in %1, %0" : "=a"(val) : "Nd"(port));
+    return val;
 }
 
-void write_char(char a) {
-    while (!is_transmit_empty());
-    __builtin_ia32_outb(SERIAL_PORT, a);
+bool is_transmit_empty() {
+    return (inb(SERIAL_PORT + 5) & 0x20) != 0;
+}
+
+void write_char(char c) {
+    while (!is_transmit_empty()) {}
+    outb(SERIAL_PORT, static_cast<std::uint8_t>(c));
 }
 
 } // anonymous namespace
 
-namespace Drivers {
-namespace Serial {
-
 void init() {
-    __builtin_ia32_outb(SERIAL_PORT + 1, 0x00);
-    __builtin_ia32_outb(SERIAL_PORT + 3, 0x80);
-    __builtin_ia32_outb(SERIAL_PORT, 0x03);
-    __builtin_ia32_outb(SERIAL_PORT + 1, 0x00);
-    __builtin_ia32_outb(SERIAL_PORT + 3, 0x03);
-    __builtin_ia32_outb(SERIAL_PORT + 2, 0xC7);
-    __builtin_ia32_outb(SERIAL_PORT + 4, 0x0B);
+    outb(SERIAL_PORT + 1, 0x00);
+    outb(SERIAL_PORT + 3, 0x80);
+    outb(SERIAL_PORT + 0, 0x03);
+    outb(SERIAL_PORT + 1, 0x00);
+    outb(SERIAL_PORT + 3, 0x03);
+    outb(SERIAL_PORT + 2, 0xC7);
+    outb(SERIAL_PORT + 4, 0x0B);
 }
 
-void write(char c) {
-    write_char(c);
+void write_string(const char* s) {
+    while (*s) write_char(*s++);
 }
 
-void write_string(const char* str) {
-    while (*str) {
-        write(*str++);
-    }
-}
-
-bool is_transmit_empty() {
-    return ::is_transmit_empty();
-}
-
-} // namespace Serial
-} // namespace Drivers
+} // namespace serial

@@ -3,15 +3,13 @@
 
 #include <cstdint>
 
-namespace Drivers {
-namespace Serial {
+namespace serial {
 
 void init();
 void write(char c);
 void write_string(const char* str);
 bool is_transmit_empty();
 
-} // namespace Serial
-} // namespace Drivers
+} // namespace serial
 
 #endif

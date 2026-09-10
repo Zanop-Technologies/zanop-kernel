@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <cstddef>
 
-namespace vga {
+namespace VGA {
 
 constexpr std::size_t WIDTH = 80;
 constexpr std::size_t HEIGHT = 25;
@@ -37,8 +37,15 @@ private:
     void clear_row(std::size_t row);
 };
 
-// Global writer instance — no interrupt-safety yet (no PIC/IDT ported
-// yet), so this is fine for now since nothing preempts kernel_main.
 extern Writer writer;
 
-} // namespace vga
+// Convenience free functions -- what main.cpp actually calls. Thin
+// wrappers around `writer`, kept separate so code that wants direct
+// Writer access (e.g. Calculator/Clock/Snake's number formatting)
+// still can.
+void init();
+void print(const char* s);
+void println(const char* s);
+void write_uint_padded(unsigned value, int width);
+
+} // namespace VGA
