@@ -1,7 +1,6 @@
 # Zanop Kernel
 
-The Zanop OS kernel — written in Rust with Assembly for low-level
-architecture code (boot, interrupts, context switches).
+The Zanop OS kernel — written in C++ architecture code (boot, interrupts, context switches).
 
 ## Support
 
