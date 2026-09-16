@@ -44,6 +44,11 @@ void Writer::write_string(const char* s) {
     while (*s) write_byte(*s++);
 }
 
+void Writer::put_at(std::size_t col, std::size_t row, char c) {
+    if (col >= WIDTH || row >= HEIGHT) return;
+    buffer_[row * WIDTH + col] = ScreenChar{static_cast<std::uint8_t>(c), color_code_};
+}
+
 Writer writer;
 
 void init() { writer.clear_screen(); }

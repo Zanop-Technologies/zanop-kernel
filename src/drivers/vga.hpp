@@ -27,6 +27,13 @@ public:
     void write_byte(char c);
     void clear_screen();
 
+    // Writes a single byte at an absolute (col, row) position WITHOUT
+    // touching the writer's own row_/col_ cursor -- used by the
+    // Desktop OS compositor to draw windows independently of wherever
+    // normal print!/println! output currently is. This is the kernel-
+    // level primitive compositor::surface:: depends on directly.
+    void put_at(std::size_t col, std::size_t row, char c);
+
 private:
     std::size_t row_ = 0;
     std::size_t col_ = 0;
@@ -39,10 +46,6 @@ private:
 
 extern Writer writer;
 
-// Convenience free functions -- what main.cpp actually calls. Thin
-// wrappers around `writer`, kept separate so code that wants direct
-// Writer access (e.g. Calculator/Clock/Snake's number formatting)
-// still can.
 void init();
 void print(const char* s);
 void println(const char* s);
