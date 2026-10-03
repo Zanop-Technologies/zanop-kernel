@@ -1,7 +1,7 @@
 #ifndef PANIC_HPP
 #define PANIC_HPP
 
-#include <cstdint>
+#include "types.hpp"
 
 struct PanicInfo {
     const char* message;

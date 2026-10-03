@@ -1,6 +1,5 @@
 #pragma once
-#include <cstdint>
-#include <cstddef>
+#include "../types.hpp"
 
 namespace VGA {
 

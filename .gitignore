@@ -9,6 +9,9 @@ Cargo.lock
 *.o
 *.elf
 
+# Temp things
+TEMP.md
+
 # Editor/IDE
 .vscode/
 .idea/

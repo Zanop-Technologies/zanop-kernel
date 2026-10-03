@@ -11,20 +11,6 @@ struct __attribute__((packed)) IdtEntry {
     uint16_t offset_mid;
     uint32_t offset_high;
     uint32_t zero;
-    
-    constexpr IdtEntry() 
-        : offset_low(0), selector(0), ist(0), type_attr(0),
-          offset_mid(0), offset_high(0), zero(0) {}
-    
-    void set_handler(uint64_t handler, uint16_t sel = 0x08) {
-        offset_low = static_cast<uint16_t>(handler & 0xFFFF);
-        offset_mid = static_cast<uint16_t>((handler >> 16) & 0xFFFF);
-        offset_high = static_cast<uint32_t>((handler >> 32) & 0xFFFFFFFF);
-        selector = sel;
-        ist = 0;
-        type_attr = 0x8E;  // Present, ring 0, 64-bit interrupt gate
-        zero = 0;
-    }
 };
 
 struct __attribute__((packed)) IdtPointer {
@@ -33,21 +19,30 @@ struct __attribute__((packed)) IdtPointer {
 };
 
 constexpr size_t IDT_ENTRIES = 256;
-alignas(16) static IdtEntry idt[IDT_ENTRIES];
+static IdtEntry idt[IDT_ENTRIES] __attribute__((aligned(16)));
 
 void init() {
-    for (size_t i = 0; i < IDT_ENTRIES; i++) {
-        idt[i] = IdtEntry();
+    for (size_t index = 0; index < IDT_ENTRIES; ++index) {
+        idt[index] = {};
     }
-    
-    idt[33].set_handler(reinterpret_cast<uint64_t>(isr33));
-    
-    IdtPointer ptr {
-        .limit = sizeof(idt) - 1,
-        .base = reinterpret_cast<uint64_t>(&idt)
-    };
-    
-    __builtin_ia32_lidt(&ptr);
+
+    uint64_t handler = reinterpret_cast<uint64_t>(isr33);
+    idt[33].offset_low = static_cast<uint16_t>(handler);
+    idt[33].selector = 0x08;
+    idt[33].type_attr = 0x8E;
+    idt[33].offset_mid = static_cast<uint16_t>(handler >> 16);
+    idt[33].offset_high = static_cast<uint32_t>(handler >> 32);
+
+    handler = reinterpret_cast<uint64_t>(isr44);
+    idt[44].offset_low = static_cast<uint16_t>(handler);
+    idt[44].selector = 0x08;
+    idt[44].type_attr = 0x8E;
+    idt[44].offset_mid = static_cast<uint16_t>(handler >> 16);
+    idt[44].offset_high = static_cast<uint32_t>(handler >> 32);
+
+    IdtPointer pointer{static_cast<uint16_t>(sizeof(idt) - 1),
+                       reinterpret_cast<uint64_t>(&idt)};
+    __asm__ volatile("lidt %0" : : "m"(pointer));
 }
 
 } // namespace IDT

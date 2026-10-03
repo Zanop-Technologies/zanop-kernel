@@ -4,12 +4,12 @@
 #include "snake.hpp"
 #include "notes.hpp"
 #include "../drivers/vga.hpp"
-#include <cstring>
+#include "../types.hpp"
 
 namespace Apps {
 
 void launch(const char* name) {
-    VGA::clear_screen();
+    VGA::writer.clear_screen();
     VGA::print("Launching ");
     VGA::println(name);
     VGA::println("(Press ESC to exit)");
@@ -22,7 +22,7 @@ void launch(const char* name) {
         VGA::println("App not found.");
     }
 
-    VGA::clear_screen();
+    VGA::writer.clear_screen();
 }
 
 } // namespace Apps

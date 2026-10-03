@@ -76,10 +76,12 @@ void run() {
         }
 
         update();
-        VGA::clear_screen();
+        VGA::writer.clear_screen();
         draw();
         
-        for (volatile int i = 0; i < 500000; i++);
+        for (int i = 0; i < 500000; ++i) {
+            __asm__ volatile("pause");
+        }
     }
 }
 

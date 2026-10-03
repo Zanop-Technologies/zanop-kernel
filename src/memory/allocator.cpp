@@ -1,4 +1,5 @@
 #include "allocator.hpp"
+#include "paging.hpp"
 
 namespace Memory {
 namespace {
@@ -12,6 +13,7 @@ std::uintptr_t align_up(std::uintptr_t addr, std::size_t align) {
 }
 
 void init() {
+    Paging::init();
     next = HEAP_START;
     heap_end = HEAP_START + HEAP_SIZE;
 }

@@ -1,6 +1,6 @@
 CXX = clang++
 AS = nasm
-LD = ld.lld
+LD = ld
 
 CXXFLAGS = --target=x86_64-elf -ffreestanding -nostdlib \
            -fno-exceptions -fno-rtti -fno-stack-protector \
@@ -12,7 +12,12 @@ SRCS = src/main.cpp \
        src/drivers/serial.cpp \
        src/arch/x86_64/pic.cpp \
        src/arch/x86_64/idt.cpp \
+       src/arch/x86_64/mod.cpp \
        src/fs/fs.cpp \
+       src/memory/allocator.cpp \
+       src/framebuffer/framebuffer.cpp \
+       src/framebuffer/multiboot.cpp \
+       src/panic.cpp \
        src/shell/shell.cpp \
        src/apps/apps.cpp \
        src/apps/clock.cpp \

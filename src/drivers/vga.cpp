@@ -9,7 +9,8 @@ Writer::Writer()
 void Writer::clear_row(std::size_t row) {
     ScreenChar blank{' ', color_code_};
     for (std::size_t col = 0; col < WIDTH; ++col) {
-        buffer_[row * WIDTH + col] = blank;
+        buffer_[row * WIDTH + col].ascii_char = blank.ascii_char;
+        buffer_[row * WIDTH + col].color_code = blank.color_code;
     }
 }
 
@@ -25,7 +26,8 @@ void Writer::new_line() {
     } else {
         for (std::size_t row = 1; row < HEIGHT; ++row) {
             for (std::size_t col = 0; col < WIDTH; ++col) {
-                buffer_[(row - 1) * WIDTH + col] = buffer_[row * WIDTH + col];
+                buffer_[(row - 1) * WIDTH + col].ascii_char = buffer_[row * WIDTH + col].ascii_char;
+                buffer_[(row - 1) * WIDTH + col].color_code = buffer_[row * WIDTH + col].color_code;
             }
         }
         clear_row(HEIGHT - 1);
@@ -36,7 +38,8 @@ void Writer::new_line() {
 void Writer::write_byte(char c) {
     if (c == '\n') { new_line(); return; }
     if (col_ >= WIDTH) new_line();
-    buffer_[row_ * WIDTH + col_] = ScreenChar{static_cast<std::uint8_t>(c), color_code_};
+    buffer_[row_ * WIDTH + col_].ascii_char = static_cast<std::uint8_t>(c);
+    buffer_[row_ * WIDTH + col_].color_code = color_code_;
     ++col_;
 }
 
@@ -46,12 +49,16 @@ void Writer::write_string(const char* s) {
 
 void Writer::put_at(std::size_t col, std::size_t row, char c) {
     if (col >= WIDTH || row >= HEIGHT) return;
-    buffer_[row * WIDTH + col] = ScreenChar{static_cast<std::uint8_t>(c), color_code_};
+    buffer_[row * WIDTH + col].ascii_char = static_cast<std::uint8_t>(c);
+    buffer_[row * WIDTH + col].color_code = color_code_;
 }
 
 Writer writer;
 
-void init() { writer.clear_screen(); }
+void init() {
+    writer = Writer();
+    writer.clear_screen();
+}
 void print(const char* s) { writer.write_string(s); }
 void println(const char* s) { writer.write_string(s); writer.write_byte('\n'); }
 

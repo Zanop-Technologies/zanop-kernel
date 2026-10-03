@@ -1,7 +1,7 @@
 #ifndef DRIVERS_SERIAL_HPP
 #define DRIVERS_SERIAL_HPP
 
-#include <cstdint>
+#include "../types.hpp"
 
 namespace serial {
 

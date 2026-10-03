@@ -1,7 +1,7 @@
 #include "calculator.hpp"
 #include "../drivers/vga.hpp"
 #include "../drivers/keyboard.hpp"
-#include <cstring>
+#include "../types.hpp"
 
 namespace Calculator {
 

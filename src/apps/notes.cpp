@@ -2,7 +2,7 @@
 #include "../drivers/vga.hpp"
 #include "../drivers/keyboard.hpp"
 #include "../fs/fs.hpp"
-#include <cstring>
+#include "../types.hpp"
 
 namespace Notes {
 

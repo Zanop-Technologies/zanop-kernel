@@ -30,7 +30,9 @@ void run() {
         VGA::print(buf);
         
         // Simple delay
-        for (volatile int i = 0; i < 1000000; i++); 
+        for (int i = 0; i < 1000000; ++i) {
+            __asm__ volatile("pause");
+        }
     }
 }
 }

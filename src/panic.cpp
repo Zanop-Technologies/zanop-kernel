@@ -7,9 +7,9 @@ void panic_handler(const PanicInfo& info) {
     __asm__ volatile("cli");
     
     // Write to serial
-    Drivers::Serial::write_string("KERNEL PANIC: ");
-    Drivers::Serial::write_string(info.message);
-    Drivers::Serial::write_string("\n");
+    serial::write_string("KERNEL PANIC: ");
+    serial::write_string(info.message);
+    serial::write_string("\n");
     
     // Write to VGA
     VGA::println("KERNEL PANIC!");
@@ -18,6 +18,6 @@ void panic_handler(const PanicInfo& info) {
     
     // Halt
     while (true) {
-        __builtin_ia32_hlt();
+        __asm__ volatile("hlt");
     }
 }

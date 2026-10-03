@@ -1,5 +1,4 @@
 #include "serial.hpp"
-#include <cstdint>
 
 namespace serial {
 namespace {

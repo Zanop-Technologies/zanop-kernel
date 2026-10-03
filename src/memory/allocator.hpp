@@ -1,8 +1,7 @@
 #ifndef MEMORY_ALLOCATOR_HPP
 #define MEMORY_ALLOCATOR_HPP
 
-#include <cstddef>
-#include <cstdint>
+#include "../types.hpp"
 
 namespace Memory {
 

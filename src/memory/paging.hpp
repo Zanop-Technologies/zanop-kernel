@@ -1,7 +1,7 @@
 #ifndef MEMORY_PAGING_HPP
 #define MEMORY_PAGING_HPP
 
-#include <cstdint>
+#include "../types.hpp"
 
 namespace Memory {
 namespace Paging {
