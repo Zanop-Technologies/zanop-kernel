@@ -1,83 +1,17 @@
-# Zanop Kernel — C++ Rewrite (Alpha v0.0.5, in progress)
+# Zanop Kernel — C++ Rewrite (early development)
 
-This is the **first skeleton** of the C++ rewrite, not a full port of
-everything the Rust kernel had. The goal here is to prove the whole
-toolchain (Clang freestanding target → NASM → ld.lld → Limine → QEMU)
-actually works end to end with a minimal kernel, before porting the
-larger subsystems over.
+Zanop is a freestanding x86-64 kernel prototype written in C++ and assembly. It currently contains boot/interrupt support, keyboard and serial drivers, a small file system, VGA/framebuffer output, a shell, built-in apps, and early kernel service APIs. This is experimental kernel code—not a general-purpose OS or a POSIX implementation.
 
-## Why C++ + Clang, and why this approach specifically
+## Kernel services
+- **Processes:** fixed-size process table, PID/state reporting, process entry callbacks, and a cooperative dispatcher. This is not preemptive multitasking: a callback runs until it returns, and `yield()` cannot suspend and later resume its stack.
+- **Memory:** a fixed-region heap allocator with block reuse/coalescing, plus page-table query/map/unmap helpers. The allocator assumes its configured heap range is mapped and available. The paging helpers operate on the active tables and only add leaf mappings where intermediate tables already exist.
+- **Filesystem:** the kernel's bounded file/directory table with ATA-backed storage when a supported device has a valid Zanop FS volume. It is not a host filesystem and does not implement POSIX metadata or permissions.
+- **System-call-style API:** `Syscall::invoke()` exposes kernel-internal write/read/open/close/yield/PID/kill/exit and mapping operations. It is a C++ dispatcher, not a userspace privilege boundary or `SYSCALL` instruction ABI.
+- **Terminal and signals:** keyboard/serial line input, VGA/serial output, Ctrl-C interruption, and registered signal callbacks. Signal delivery is cooperative and limited to the currently executing kernel context.
+- **Neovim:** the kernel does not run Linux Neovim binaries. Neovim depends on a userspace process/VM, POSIX APIs, dynamic libraries and terminal features that this kernel does not provide. The terminal can be used with host-side Neovim to edit this repository; a native editor would need to be written/ported as a kernel application.
 
-The Rust build hit nearly every one of its real, hard-to-debug errors
-in the nightly-only `-Zbuild-std`/`-Zjson-target-spec` machinery
-itself — the pointer-width type, the ABI field name, the soft-float
-feature location all changed between nightly snapshots during actual
-debugging. Clang's `x86_64-unknown-none` target is a **first-class,
-stable** freestanding target — no custom target JSON, no nightly
-compiler, no `build-std` step compiling `core`/`alloc` from source
-every time.
+## Build
+The Makefile uses `clang++`, NASM, and a linker for the `x86_64-elf` freestanding target. Build and run commands are available via `make` and the configured `make run` target. The external desktop shell/compositor source includes referenced by this checkout may require the corresponding sibling repository to be present.
 
-`boot.asm` and `linker.ld` are carried over **unchanged in logic**
-from the corrected versions that actually booted successfully
-tonight (Multiboot2 header, `gdt64` kept in low memory in `.boot`
-rather than `.rodata`, page tables/stack in `.bss.boot` rather than
-the default higher-half `.bss`). Assembly-level concerns don't care
-what language calls into them, so none of that debugging was wasted.
-
-## What's ported so far
-
-- `boot.asm` / `linker.ld` — unchanged logic from the working Rust build
-- A minimal VGA text-mode writer (`drivers/vga.hpp`/`.cpp`)
-- `kernel_main` — clears the screen, prints a boot message, halts
-
-## What's deliberately NOT ported yet
-
-Everything else from the Rust kernel — on purpose, so this skeleton
-stays small enough to actually verify works before building on it:
-
-- Serial, keyboard, RTC drivers
-- PIC/IDT interrupt handling
-- The in-memory filesystem
-- The shell (`chd`/`cre`/`con`/`info`/`app`)
-- The four built-in apps (Calculator, Notes, Clock, Snake)
-
-These get ported in follow-up passes once this skeleton is confirmed
-booting for real.
-
-## Building
-
-Requires: `clang++`, `nasm`, `ld.lld`, `xorriso` — all already
-available in the proot Ubuntu environment from tonight's session.
-Also assumes `../limine` (the Limine bootloader repo, already cloned
-and built tonight) sits as a sibling folder to this one.
-
-```bash
-make
-make run
-```
-
-`make run` builds a bootable ISO via Limine (the same recipe that
-successfully booted the Rust kernel tonight) and launches it in QEMU
-with `-display curses`, so you'll see the VGA text output directly in
-your terminal.
-
-## Known limitations (honest, not hedging)
-
-- **Not yet tested** — same as every kernel build tonight, this was
-  written carefully following the same patterns that worked, but
-  hasn't been run yet. Given how many small things went wrong in the
-  Rust build's toolchain layer specifically (not the code layer), the
-  actual code/logic here has a reasonable chance of working on the
-  first or second try — but "reasonable chance" isn't "confirmed."
-- No memory allocator yet, so nothing beyond simple stack-based logic
-  will work (no dynamic containers, no heap).
-- No interrupt handling yet, so no keyboard input is possible at all
-  until PIC/IDT gets ported.
-
-## Next steps
-
-Run `make && make run`, confirm the boot message appears, then port
-subsystems one at a time (driver layer first, then filesystem/shell,
-then apps) — same order they were originally built in, each one
-build-tested before moving to the next, rather than porting
-everything at once.
+## Limitations
+This prototype has not been verified in a booted environment in this task. The scheduler does not context-switch, per-process address spaces are absent, and the page-table mapper does not allocate intermediate page-table frames. The file-system API is constrained by its existing fixed-size structures and storage format. Input editing is basic and does not provide a full ANSI terminal implementation. Do not treat the kernel services as secure against untrusted code; syscall arguments are kernel pointers and are not validated as userspace addresses.

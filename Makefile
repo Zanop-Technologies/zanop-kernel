@@ -9,21 +9,32 @@ CXXFLAGS = --target=x86_64-elf -ffreestanding -nostdlib \
 SRCS = src/main.cpp \
        src/drivers/vga.cpp \
        src/drivers/keyboard.cpp \
+       src/drivers/mouse.cpp \
+       src/drivers/ata.cpp \
        src/drivers/serial.cpp \
        src/arch/x86_64/pic.cpp \
        src/arch/x86_64/idt.cpp \
        src/arch/x86_64/mod.cpp \
        src/fs/fs.cpp \
        src/memory/allocator.cpp \
+       src/memory/paging.cpp \
+       src/process.cpp \
+       src/signals.cpp \
+       src/syscall.cpp \
+       src/terminal.cpp \
        src/framebuffer/framebuffer.cpp \
        src/framebuffer/multiboot.cpp \
        src/panic.cpp \
        src/shell/shell.cpp \
+        \
+        \
        src/apps/apps.cpp \
        src/apps/clock.cpp \
        src/apps/calculator.cpp \
        src/apps/snake.cpp \
-       src/apps/notes.cpp
+       src/apps/notes.cpp \
+       src/compositor_surface.cpp \
+       src/installer_installer.cpp 
        
 
 OBJS = $(SRCS:.cpp=.o)

@@ -8,6 +8,16 @@ namespace Framebuffer {
 // from boot.asm. Returns false if no usable framebuffer was found
 // (caller should fall back to VGA text mode in that case).
 bool init(std::uint64_t multiboot_info_addr);
+// Allocate the back buffer and point the drawing surface at it. Call once
+// after init(). Returns false if no usable buffer can be obtained, in which
+// case the driver keeps drawing straight to the display (still correct,
+// just flicker-prone).
+bool enable_double_buffer();
+bool is_double_buffered();
+// Copy the finished back buffer out to the display in one pass. A no-op
+// when double buffering is unavailable. This is what stops the desktop from
+// flickering: callers draw a whole frame invisible, then flip it.
+void present();
 
 bool is_available();
 

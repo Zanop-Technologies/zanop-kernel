@@ -103,11 +103,17 @@ void kernel_main(std::uint64_t multiboot_info_addr) {
         draw_boot_progress(true, 92, "FRAMEBUFFER READY");
         // width()/height() reflect whatever was ACTUALLY granted --
         // may not be exactly 800x600 if that mode wasn't available.
+        // Must happen AFTER the boot progress bar has been painted: once the
+        // back buffer is on, every draw goes there and the display only
+        // updates on present().
+        Framebuffer::enable_double_buffer();
+        Framebuffer::present();
     } else {
         draw_boot_progress(false, 92, "VGA TEXT MODE READY");
     }
 
     draw_boot_progress(has_gfx, 100, "STARTING DESKTOP");
+    if (has_gfx) Framebuffer::present();
     desktop_shell::run();
 
     while (true) {

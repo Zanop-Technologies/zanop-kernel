@@ -6,9 +6,15 @@
 namespace FS {
 
 struct File {
-    char name[32];
+    char name[48];
     char content[256];
     bool used;
+    bool is_directory;
+};
+
+struct DirectoryEntry {
+    char name[48];
+    bool is_directory;
 };
 
 void init();
@@ -19,6 +25,12 @@ std::size_t mounted_device();
 std::uint64_t free_bytes();
 std::size_t file_count();
 const char* file_name(std::size_t index);
+bool create_directory(const char* path);
+bool remove_directory(const char* path);
+bool remove_file(const char* path);
+bool is_directory(const char* path);
+std::size_t directory_entry_count(const char* path);
+bool directory_entry(const char* path, std::size_t index, DirectoryEntry& entry);
 bool create_file(const char* name, const char* content);
 const char* read_file(const char* name);
 bool read_file(const char* name, std::uint8_t* buffer, std::size_t capacity,

@@ -24,6 +24,7 @@ public:
     Writer();
     void write_string(const char* s);
     void write_byte(char c);
+    void backspace();
     void clear_screen();
 
     // Writes a single byte at an absolute (col, row) position WITHOUT

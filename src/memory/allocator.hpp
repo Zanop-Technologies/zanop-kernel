@@ -11,6 +11,7 @@ constexpr std::size_t HEAP_SIZE = 100 * 1024;
 void init();
 void* allocate(std::size_t size, std::size_t align = alignof(std::max_align_t));
 void deallocate(void* ptr);
+std::size_t free_bytes();
 
 } // namespace Memory
 

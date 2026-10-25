@@ -43,6 +43,14 @@ void Writer::write_byte(char c) {
     ++col_;
 }
 
+void Writer::backspace() {
+    if (col_ == 0 && row_ == 0) return;
+    if (col_ == 0) { --row_; col_ = WIDTH; }
+    --col_;
+    buffer_[row_ * WIDTH + col_].ascii_char = static_cast<std::uint8_t>(' ');
+    buffer_[row_ * WIDTH + col_].color_code = color_code_;
+}
+
 void Writer::write_string(const char* s) {
     while (*s) write_byte(*s++);
 }

@@ -18,6 +18,12 @@ bool is_transmit_empty() {
     return (inb(SERIAL_PORT + 5) & 0x20) != 0;
 }
 
+bool try_read(char& c) {
+    if ((inb(SERIAL_PORT + 5) & 0x01) == 0) return false;
+    c = static_cast<char>(inb(SERIAL_PORT));
+    return true;
+}
+
 void write_char(char c) {
     while (!is_transmit_empty()) {}
     outb(SERIAL_PORT, static_cast<std::uint8_t>(c));

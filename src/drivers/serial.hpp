@@ -8,6 +8,8 @@ namespace serial {
 void init();
 void write(char c);
 void write_string(const char* str);
+bool try_read(char& c);
+bool try_read(char& c);
 bool is_transmit_empty();
 
 } // namespace serial
