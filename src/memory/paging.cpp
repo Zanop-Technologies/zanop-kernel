@@ -49,7 +49,11 @@ bool map_page(uintptr_t virtual_address, uintptr_t physical_address, uint64_t fl
     uint64_t& leaf = table[indexes[3]];
     if (leaf & PRESENT) return false;
     leaf = (physical_address & ADDRESS_MASK) | (flags & 0xFFF) | PRESENT;
+<<<<<<< HEAD
     __asm__ volatile("invlpg (%0)" : "r"(virtual_address) : "memory");
+=======
+    __asm__ volatile("invlpg (%0)" :: "r"(virtual_address) : "memory");
+>>>>>>> f0274d9 (forgot to commit)
     return true;
 }
 
@@ -70,7 +74,11 @@ bool unmap_page(uintptr_t virtual_address) {
     uint64_t& leaf = table[indexes[3]];
     if (!(leaf & PRESENT)) return false;
     leaf = 0;
+<<<<<<< HEAD
     __asm__ volatile("invlpg (%0)" : "r"(virtual_address) : "memory");
+=======
+    __asm__ volatile("invlpg (%0)" :: "r"(virtual_address) : "memory");
+>>>>>>> f0274d9 (forgot to commit)
     return true;
 }
 
