@@ -138,7 +138,11 @@ void screen_finish() {
 
 } // namespace
 
-void run() {
+// NOTE: the real installer::run() lives in installer.cpp under
+// zanop-desktop-os/installer/src -- this file only provides the
+// kernel-local installer variant.
+
+void run_kernel_installer() {
     vga_font::load(vga_font::SPACE_MONO_FONT);
     VGA::init();
 

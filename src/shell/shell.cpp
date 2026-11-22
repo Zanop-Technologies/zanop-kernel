@@ -5,6 +5,7 @@
 #include "../syscall.hpp"
 #include "../memory/allocator.hpp"
 #include "../signals.hpp"
+#include "../drivers/vga.hpp"
 namespace {
 char line[256];
 char current_directory[48] = "/";

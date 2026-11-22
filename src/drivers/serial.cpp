@@ -14,9 +14,16 @@ inline std::uint8_t inb(std::uint16_t port) {
     return val;
 }
 
-bool is_transmit_empty() {
+inline bool is_transmit_empty() {
     return (inb(SERIAL_PORT + 5) & 0x20) != 0;
 }
+
+inline void write_char(char c) {
+    while (!is_transmit_empty()) {}
+    outb(SERIAL_PORT, static_cast<std::uint8_t>(c));
+}
+
+} // anonymous namespace
 
 bool try_read(char& c) {
     if ((inb(SERIAL_PORT + 5) & 0x01) == 0) return false;
@@ -24,12 +31,9 @@ bool try_read(char& c) {
     return true;
 }
 
-void write_char(char c) {
-    while (!is_transmit_empty()) {}
-    outb(SERIAL_PORT, static_cast<std::uint8_t>(c));
+void write(char c) {
+    write_char(c);
 }
-
-} // anonymous namespace
 
 void init() {
     outb(SERIAL_PORT + 1, 0x00);

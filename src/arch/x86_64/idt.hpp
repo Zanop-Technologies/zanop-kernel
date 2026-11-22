@@ -10,6 +10,7 @@ void init();
 
 extern "C" void isr33();
 extern "C" void isr44();
+extern "C" void isr43();
 
 } // namespace IDT
 } // namespace Arch

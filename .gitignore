@@ -11,10 +11,7 @@ Cargo.lock
 
 # Temp things
 TEMP.md
-<<<<<<< HEAD
-=======
-RELEASE.md
->>>>>>> f0274d9 (forgot to commit)
+
 
 # Editor/IDE
 .vscode/

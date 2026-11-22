@@ -12,6 +12,7 @@ SRCS = src/main.cpp \
        src/drivers/mouse.cpp \
        src/drivers/ata.cpp \
        src/drivers/serial.cpp \
+       src/drivers/e1000.cpp \
        src/arch/x86_64/pic.cpp \
        src/arch/x86_64/idt.cpp \
        src/arch/x86_64/mod.cpp \
@@ -34,6 +35,16 @@ SRCS = src/main.cpp \
        src/apps/snake.cpp \
        src/apps/notes.cpp \
        src/compositor_surface.cpp \
+       ../zanop-desktop-os/installer/src/installer.cpp \
+       ../zanop-desktop-os/installer/src/vga_font.cpp \
+       ../zanop-desktop-os/installer/src/gui.cpp \
+       ../zanop-desktop-os/input/src/input.cpp \
+       ../zanop-desktop-os/shell/src/mod.cpp \
+       ../zanop-desktop-os/shell/src/desktop.cpp \
+       ../zanop-desktop-os/shell/src/taskbar.cpp \
+       ../zanop-desktop-os/shell/src/launcher.cpp \
+       ../zanop-desktop-os/shell/src/apps_gui.cpp \
+       ../zanop-desktop-os/compositor/src/window.cpp \
        src/installer_installer.cpp 
        
 

@@ -120,8 +120,13 @@ void draw_rgb_bitmap(std::size_t x, std::size_t y, std::size_t width,
                                  static_cast<std::uint32_t>(height), pixels);
 }
 
+void present() {
+    Framebuffer::present();
+}
+
 void draw_text(std::size_t x, std::size_t y, const char* text, Color color,
-               std::size_t scale) {
+               std::size_t scale, Font font) {
+    (void)font;
     if (!graphics_available() || text == nullptr || scale == 0) return;
     for (std::size_t index = 0; text[index] != '\0'; ++index) {
         const std::uint8_t* glyph = glyph_for(text[index]);

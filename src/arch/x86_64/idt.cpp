@@ -40,6 +40,13 @@ void init() {
     idt[44].offset_mid = static_cast<uint16_t>(handler >> 16);
     idt[44].offset_high = static_cast<uint32_t>(handler >> 32);
 
+    handler = reinterpret_cast<uint64_t>(isr43);
+    idt[43].offset_low = static_cast<uint16_t>(handler);
+    idt[43].selector = 0x08;
+    idt[43].type_attr = 0x8E;
+    idt[43].offset_mid = static_cast<uint16_t>(handler >> 16);
+    idt[43].offset_high = static_cast<uint32_t>(handler >> 32);
+
     IdtPointer pointer{static_cast<uint16_t>(sizeof(idt) - 1),
                        reinterpret_cast<uint64_t>(&idt)};
     __asm__ volatile("lidt %0" : : "m"(pointer));

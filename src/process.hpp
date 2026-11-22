@@ -1,6 +1,6 @@
 #ifndef PROCESS_PROCESS_HPP
 #define PROCESS_PROCESS_HPP
-#include "../types.hpp"
+#include "types.hpp"
 
 namespace Process {
 

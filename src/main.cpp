@@ -3,6 +3,7 @@
 #include "drivers/mouse.hpp"
 #include "drivers/ata.hpp"
 #include "drivers/serial.hpp"
+#include "drivers/e1000.hpp"
 #include "arch/x86_64/pic.hpp"
 #include "arch/x86_64/idt.hpp"
 #include "memory/allocator.hpp"
@@ -91,7 +92,9 @@ void kernel_main(std::uint64_t multiboot_info_addr) {
     Drivers::Mouse::init();
     draw_boot_progress(false, 62, "MOUSE READY");
     Drivers::ATA::init();
-    draw_boot_progress(false, 74, "DISK READY");
+    draw_boot_progress(false, 70, "DISK READY");
+    Drivers::E1000::init();
+    draw_boot_progress(false, 78, "NETWORK READY");
     FS::init();
     draw_boot_progress(false, 84, "FILESYSTEM READY");
 

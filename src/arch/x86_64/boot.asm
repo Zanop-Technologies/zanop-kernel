@@ -2,8 +2,10 @@ global _start
 extern kernel_main
 global isr33
 global isr44
+global isr43
 extern keyboard_interrupt_handler
 extern mouse_interrupt_handler
+extern e1000_interrupt_handler
 
 section .multiboot
 align 8
@@ -164,6 +166,28 @@ isr33:
     push r10
     push r11
     call keyboard_interrupt_handler
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rdi
+    pop rsi
+    pop rdx
+    pop rcx
+    pop rax
+    iretq
+
+isr43:
+    push rax
+    push rcx
+    push rdx
+    push rsi
+    push rdi
+    push r8
+    push r9
+    push r10
+    push r11
+    call e1000_interrupt_handler
     pop r11
     pop r10
     pop r9
