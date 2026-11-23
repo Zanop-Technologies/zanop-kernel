@@ -4,7 +4,7 @@ LD = ld
 
 CXXFLAGS = --target=x86_64-elf -ffreestanding -nostdlib \
            -fno-exceptions -fno-rtti -fno-stack-protector \
-           -mcmodel=large -mno-red-zone -O2
+           -mcmodel=large -mno-red-zone -O2 -no-pie
 
 SRCS = src/main.cpp \
        src/drivers/vga.cpp \
@@ -16,6 +16,7 @@ SRCS = src/main.cpp \
        src/arch/x86_64/pic.cpp \
        src/arch/x86_64/idt.cpp \
        src/arch/x86_64/mod.cpp \
+       src/net/arp.cpp \
        src/fs/fs.cpp \
        src/memory/allocator.cpp \
        src/memory/paging.cpp \
