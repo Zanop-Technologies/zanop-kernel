@@ -4,7 +4,7 @@ LD = ld
 
 CXXFLAGS = --target=x86_64-elf -ffreestanding -nostdlib \
            -fno-exceptions -fno-rtti -fno-stack-protector \
-           -mcmodel=large -mno-red-zone -O2 -no-pie
+           -mcmodel=large -mno-red-zone -mno-sse -mno-sse2 -mno-mmx -O2 -no-pie -Isrc
 
 SRCS = src/main.cpp \
        src/drivers/vga.cpp \
@@ -66,7 +66,11 @@ kernel.bin: $(OBJS) src/arch/x86_64/linker.ld
 clean:
 	rm -f $(OBJS) kernel.bin
 
-run: kernel.bin
-	qemu-system-x86_64 -kernel kernel.bin
+zanop.iso: kernel.bin isodir/boot/grub/grub.cfg
+	cp kernel.bin isodir/boot/kernel.bin
+	grub-mkrescue -o zanop.iso isodir
+
+run: zanop.iso
+	qemu-system-x86_64 -cdrom zanop.iso
 
 .PHONY: all clean run
