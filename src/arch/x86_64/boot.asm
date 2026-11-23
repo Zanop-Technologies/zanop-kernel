@@ -20,6 +20,7 @@ multiboot_header:
     dd 800
     dd 600
     dd 32
+    align 8
     dw 0
     dw 0
     dd 8
@@ -105,6 +106,20 @@ setup_page_tables:
     mov eax, page_table_l2
     or eax, 0b11
     mov [page_table_l3 + 510 * 8], eax
+
+    mov eax, page_table_l2_17
+    or eax, 0b11
+    mov [page_table_l3 + 17 * 8], eax
+    xor ecx, ecx
+.map_17:
+    mov eax, 0x200000
+    mul ecx
+    add eax, 0x10000000
+    or eax, 0b10000011
+    mov [page_table_l2_17 + ecx * 8], eax
+    inc ecx
+    cmp ecx, 128
+    jne .map_17
     xor ecx, ecx
 .loop:
     mov eax, 0x200000
@@ -226,6 +241,7 @@ align 4096
 page_table_l4: resb 4096
 page_table_l3: resb 4096
 page_table_l2: resb 16384
+page_table_l2_17: resb 4096
 align 16
 stack_bottom: resb 16384
 stack_top:
