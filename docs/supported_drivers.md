@@ -1,6 +1,6 @@
 # Suported Network Drivers
 
-**Last Updated:** November 21, 2026
+**Last Updated:** November 22, 2026
 
 **Author:** John Adman
 
@@ -26,3 +26,23 @@
 
 **Warning:**
 > Intel E1000 is only for our current VM support, if you want to suggest more drivers, please create an issue.
+
+## Intel E1000e
+
+**What is it?**
+> The e1000e driver is a Linux kernel network driver for Intel PCI Express (PCIe) Gigabit Ethernet adapters, including the PRO/1000 (82563–82583) and I217–I219 series. It replaces the older e1000 driver for PCIe hardware.
+
+**Planned Features:**
+
+- Hardware Offloading —> Supports TCP Segmentation Offload (TSO), Generic Receive Offload (GRO), and hardware checksum offloading (RX/TX) to reduce CPU load during high-throughput transfers.
+
+- Jumbo Frames —> Supports larger Maximum Transmission Units (MTU)—typically up to 8996 or 9216 bytes depending on the specific Intel controller—to improve bulk data transfer efficiency.
+
+- VLANs & Channel Bonding —> Integrates natively with Linux 802.1Q VLAN tagging and network interface bonding/teaming for failover or link aggregation.
+
+- NAPI Polling —> Uses the Linux NAPI (New API) framework to switch from interrupt-driven packet processing to polling under heavy traffic, preventing interrupt storms. (Note: This is from a google search.)
+
+- Precision Time Protocol (PTP) —> Provides hardware timestamping (ptp module dependency) on supported chipsets for sub-microsecond clock synchronization.
+
+**Warning:**
+> Please be aware that this information is based off a google search. The driver for this is only for VMs and ethernet, not WIFI.
