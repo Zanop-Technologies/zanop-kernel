@@ -4,6 +4,7 @@
 #include "drivers/ata.hpp"
 #include "drivers/serial.hpp"
 #include "drivers/e1000.hpp"
+#include "net/arp.hpp"
 #include "arch/x86_64/pic.hpp"
 #include "arch/x86_64/idt.hpp"
 #include "memory/allocator.hpp"
@@ -94,6 +95,8 @@ void kernel_main(std::uint64_t multiboot_info_addr) {
     Drivers::ATA::init();
     draw_boot_progress(false, 70, "DISK READY");
     Drivers::E1000::init();
+    Net::init();
+    Net::announce();
     draw_boot_progress(false, 78, "NETWORK READY");
     FS::init();
     draw_boot_progress(false, 84, "FILESYSTEM READY");
