@@ -11,6 +11,7 @@
 #include "framebuffer/framebuffer.hpp"
 #include "framebuffer/multiboot.hpp"
 #include "fs/fs.hpp"
+#include "posix/posix.hpp"
 #include "panic.hpp"
 #include "../../zanop-desktop-os/installer/src/installer.hpp"
 #include "../../zanop-desktop-os/compositor/src/surface.hpp"
@@ -99,6 +100,7 @@ void kernel_main(std::uint64_t multiboot_info_addr) {
     Net::announce();
     draw_boot_progress(false, 78, "NETWORK READY");
     FS::init();
+    posix::init_kernel();
     draw_boot_progress(false, 84, "FILESYSTEM READY");
 
     bool has_gfx = Framebuffer::init(multiboot_info_addr);

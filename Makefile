@@ -23,6 +23,9 @@ SRCS = src/main.cpp \
        src/process.cpp \
        src/signals.cpp \
        src/syscall.cpp \
+       src/posix/posix.cpp \
+       src/posix/kernel_backend.cpp \
+       src/posix/libc_shims.cpp \
        src/terminal.cpp \
        src/framebuffer/framebuffer.cpp \
        src/framebuffer/multiboot.cpp \
@@ -64,7 +67,7 @@ kernel.bin: $(OBJS) src/arch/x86_64/linker.ld
 	$(LD) -T src/arch/x86_64/linker.ld -o $@ $(OBJS)
 
 clean:
-	rm -f $(OBJS) kernel.bin
+	rm -f $(OBJS) kernel.bin tests/posix/test_posix
 
 zanop.iso: kernel.bin isodir/boot/grub/grub.cfg
 	cp kernel.bin isodir/boot/kernel.bin
@@ -73,4 +76,14 @@ zanop.iso: kernel.bin isodir/boot/grub/grub.cfg
 run: zanop.iso
 	qemu-system-x86_64 -cdrom zanop.iso
 
-.PHONY: all clean run
+# Host-side unit tests for the portable POSIX core (no kernel, no QEMU).
+HOSTCXX ?= g++
+
+tests/posix/test_posix: tests/posix/test_posix.cpp src/posix/posix.cpp src/posix/posix.hpp src/posix/posix_types.hpp
+	$(HOSTCXX) -std=c++17 -Wall -Wextra -Werror -g -fsanitize=address,undefined \
+		-Isrc tests/posix/test_posix.cpp src/posix/posix.cpp -o $@
+
+test-posix: tests/posix/test_posix
+	./tests/posix/test_posix
+
+.PHONY: all clean run test-posix

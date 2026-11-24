@@ -36,6 +36,8 @@ const char* read_file(const char* name);
 bool read_file(const char* name, std::uint8_t* buffer, std::size_t capacity,
                std::size_t& bytes_read);
 bool write_file(const char* name, const std::uint8_t* data, std::size_t size);
+// Size in bytes of a regular file; false if it does not exist or is a directory.
+bool file_size(const char* name, std::size_t& size);
 void list_files();
 
 } // namespace FS
