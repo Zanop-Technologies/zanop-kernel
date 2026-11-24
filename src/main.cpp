@@ -16,6 +16,7 @@
 #include "../../zanop-desktop-os/installer/src/installer.hpp"
 #include "../../zanop-desktop-os/compositor/src/surface.hpp"
 #include "../../zanop-desktop-os/shell/src/mod.hpp"
+#include "../../zanop-desktop-os/shell/src/legacy_shell.hpp"
 
 namespace {
 
@@ -122,7 +123,10 @@ void kernel_main(std::uint64_t multiboot_info_addr) {
 
     draw_boot_progress(has_gfx, 100, "STARTING DESKTOP");
     if (has_gfx) Framebuffer::present();
-    desktop_shell::run();
+    // Graphical desktop when a framebuffer was granted; the text shell
+    // imported from zanop-kernel/src/shell as the fallback otherwise.
+    if (has_gfx) desktop_shell::run();
+    else legacy_shell::run();
 
     while (true) {
         __asm__ volatile("hlt");
