@@ -48,6 +48,7 @@ SRCS = src/main.cpp \
        ../zanop-desktop-os/shell/src/taskbar.cpp \
        ../zanop-desktop-os/shell/src/launcher.cpp \
        ../zanop-desktop-os/shell/src/apps_gui.cpp \
+       ../zanop-desktop-os/shell/src/legacy_shell.cpp \
        ../zanop-desktop-os/compositor/src/window.cpp \
        src/installer_installer.cpp 
        
