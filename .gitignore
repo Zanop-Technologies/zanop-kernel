@@ -21,3 +21,6 @@ TEMP.md
 # OS-specific
 .DS_Store
 Thumbs.db
+
+# POSIX layer host test binary
+tests/posix/test_posix

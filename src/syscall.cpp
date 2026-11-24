@@ -5,6 +5,7 @@
 #include "signals.hpp"
 #include "memory/allocator.hpp"
 #include "memory/paging.hpp"
+#include "posix/posix.hpp"
 namespace {
 constexpr size_t HANDLE_COUNT = 16;
 struct Handle { bool used; char path[48]; size_t offset; bool writable; } handles[HANDLE_COUNT] = {};
@@ -12,6 +13,11 @@ void copy(char* out, const char* in, size_t max) { size_t i=0; if(in) while(i+1<
 size_t text_length(const char* text, size_t max) { size_t n=0; if (!text) return max; while(n<max && text[n]) ++n; return n; }
 }
 namespace Syscall {
+long long posix_invoke(uint64_t number, uint64_t a1, uint64_t a2, uint64_t a3,
+                       uint64_t a4, uint64_t a5, uint64_t a6) {
+    return posix::syscall(number, a1, a2, a3, a4, a5, a6);
+}
+
 long long invoke(uint64_t number, uint64_t a1, uint64_t a2, uint64_t a3) {
     switch (number) {
     case Write: {

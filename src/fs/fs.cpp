@@ -657,6 +657,25 @@ bool read_file(const char* name, uint8_t* buffer, size_t capacity, size_t& bytes
 	return true;
 }
 
+bool file_size(const char* name, size_t& size) {
+	size = 0;
+	char canonical[NAME_SIZE];
+	if (!canonicalize_path(name, canonical, false)) return false;
+	if (disk_mounted) {
+		const int index = find_disk_file(canonical);
+		if (index < 0 || is_directory_entry(disk_files[index])) return false;
+		size = disk_files[index].size_bytes;
+		return true;
+	}
+	for (const File& file : files) {
+		if (file.used && !file.is_directory && equal_name(file.name, canonical)) {
+			size = string_length(file.content);
+			return true;
+		}
+	}
+	return false;
+}
+
 void list_files() {
 	if (disk_mounted) {
 		for (size_t index = 0; index < DISK_FILE_COUNT; ++index) {
