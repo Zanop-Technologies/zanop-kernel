@@ -11,6 +11,7 @@ void init();
 extern "C" void isr33();
 extern "C" void isr44();
 extern "C" void isr43();
+extern "C" const uint64_t zanop_exception_stubs[32];
 
 } // namespace IDT
 } // namespace Arch

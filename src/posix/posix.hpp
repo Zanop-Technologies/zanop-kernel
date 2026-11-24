@@ -67,6 +67,14 @@ i64 syscall(u64 number, u64 a1 = 0, u64 a2 = 0, u64 a3 = 0, u64 a4 = 0,
 // Called when a process is known to be gone: closes its descriptors.
 void reap(u32 pid);
 
+// Ring-3 support. Between enter_user_context() and leave_user_context(),
+// syscall() serves a user program: pointer arguments must lie inside
+// [lo, hi), descriptors are tracked under `pid`, and exit() only drops that
+// state (the caller of the program decides what happens next).
+void enter_user_context(u32 pid, u64 lo, u64 hi);
+void leave_user_context();   // also closes the program's descriptors
+bool in_user_context();
+
 // Binds the layer to the running kernel (kernel_backend.cpp).
 void init_kernel();
 

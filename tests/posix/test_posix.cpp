@@ -583,6 +583,91 @@ static void test_processes() {
     CHECK_EQ(sc(nr::GETPID), 17);             // getpid never needs a slot
 }
 
+// A ring-3 program may only pass pointers inside its own region; anything else
+// is refused with EFAULT instead of being read or written by the kernel.
+alignas(16) static u8 arena[8192];
+
+static void test_user_context() {
+    mock::reset();
+    put_file("/ok", "data");
+    const u64 lo = A(arena);
+    const u64 hi = lo + sizeof(arena);
+    posix::enter_user_context(9000, lo, hi);
+    CHECK(posix::in_user_context());
+    CHECK_EQ(sc(nr::GETPID), 9000); // virtual pid, not the kernel's
+
+    // Pointers inside the region work, for strings and for buffers.
+    char* path = reinterpret_cast<char*>(arena);
+    strcpy(path, "/ok");
+    char* buf = reinterpret_cast<char*>(arena + 64);
+    const i64 fd = sys_open(path, oflag::RDONLY);
+    CHECK(fd >= 3);
+    CHECK_EQ(sc(nr::READ, fd, A(buf), 4), 4);
+    CHECK(memcmp(buf, "data", 4) == 0);
+    CHECK_EQ(sc(nr::READ, fd, hi - 2, 4), -err::FAULT); // buffer runs past the end
+    CHECK_EQ(sc(nr::READ, fd, hi - 4, 4), 0);           // exactly fits (at EOF)
+
+    // Pointers outside the region are refused, for every kind of argument.
+    char outside[16] = "/ok";
+    CHECK_EQ(sys_open(outside, oflag::RDONLY), -err::FAULT);
+    CHECK_EQ(sc(nr::READ, fd, A(outside), 4), -err::FAULT);
+    CHECK_EQ(sc(nr::WRITE, 1, A(outside), 4), -err::FAULT);
+    CHECK_EQ(sc(nr::READ, fd, lo - 1, 4), -err::FAULT);       // just below
+    CHECK_EQ(sc(nr::READ, fd, hi, 1), -err::FAULT);           // at the end
+    CHECK_EQ(sc(nr::READ, fd, 0xFFFFFFFF80100000ull, 4), -err::FAULT); // kernel space
+    Stat st;
+    CHECK_EQ(sc(nr::STAT, A(path), A(&st)), -err::FAULT);     // output struct outside
+    CHECK_EQ(sc(nr::FSTAT, fd, A(&st)), -err::FAULT);
+    UtsName un;
+    CHECK_EQ(sc(nr::UNAME, A(&un)), -err::FAULT);
+    char cwd[8];
+    CHECK_EQ(sc(nr::GETCWD, A(cwd), sizeof(cwd)), -err::FAULT);
+    CHECK_EQ(sc(nr::IOCTL, 1, ioc::TCGETS, A(outside)), -err::FAULT);
+    CHECK_EQ(sc(nr::IOCTL, 1, ioc::TIOCGWINSZ, A(outside)), -err::FAULT);
+    IoVec bad = {outside, 4};
+    CHECK_EQ(sc(nr::WRITEV, 1, A(&bad), 1), -err::FAULT);
+    CHECK_EQ(sc(nr::RENAME, A(path), A(outside)), -err::FAULT);
+    CHECK_EQ(sc(nr::NEWFSTATAT, static_cast<u64>(static_cast<i32>(AT_FDCWD)), A(outside), A(&st)), -err::FAULT);
+
+    // An unterminated string must not be read past the end of the region.
+    for (usize i = 0; i < sizeof(arena); ++i) arena[i] = 'a';
+    CHECK_EQ(sc(nr::OPEN, lo, oflag::RDONLY), -err::FAULT);
+    CHECK_EQ(sc(nr::OPEN, hi - 1, oflag::RDONLY), -err::FAULT);
+    arena[sizeof(arena) - 1] = '\0';
+    CHECK_EQ(sc(nr::OPEN, hi - 1, oflag::RDONLY), -err::NOENT); // "" is a valid empty string
+
+    // A user program cannot grow memory through mmap yet.
+    CHECK_EQ(sc(nr::MMAP, 0, 4096, 3, mmapf::ANONYMOUS | mmapf::PRIVATE, static_cast<u64>(-1)), -err::NOSYS);
+
+    // exit() only drops the program's state; it never reaches the kernel's
+    // own process table.
+    strcpy(path, "/ok");
+    const i64 held = sys_open(path, oflag::RDONLY);
+    CHECK(held >= 3);
+    CHECK_EQ(sc(nr::EXIT, 3), 0);
+    CHECK_EQ(mock::exits.size(), 0);
+    CHECK_EQ(sc(nr::CLOSE, held), -err::BADF); // state was dropped; a fresh table has no such fd
+
+    // Leaving the context closes descriptors and restores kernel behaviour.
+    posix::leave_user_context();
+    CHECK(!posix::in_user_context());
+    CHECK_EQ(sc(nr::GETPID), 100);
+    CHECK(sys_open(outside, oflag::RDONLY) >= 3); // kernel callers may use any pointer again
+    char kbuf[8] = {0};
+    const i64 kfd = sys_open("/ok", oflag::RDONLY);
+    CHECK_EQ(sc(nr::READ, kfd, A(kbuf), 4), 4);
+
+    // Descriptors opened by the user program do not leak into kernel state.
+    posix::enter_user_context(9001, lo, hi);
+    strcpy(path, "/ok");
+    for (int i = 0; i < 20; ++i) sys_open(path, oflag::RDONLY);
+    posix::leave_user_context();
+    posix::enter_user_context(9001, lo, hi);
+    strcpy(path, "/ok");
+    CHECK_EQ(sys_open(path, oflag::RDONLY), 3); // table was reset, lowest fd again
+    posix::leave_user_context();
+}
+
 int main() {
     test_console();
     test_file_io();
@@ -594,6 +679,7 @@ int main() {
     test_memory();
     test_terminal_and_misc();
     test_processes();
+    test_user_context();
     printf("%d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;
 }
