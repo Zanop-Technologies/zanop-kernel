@@ -18,6 +18,10 @@ bool is_double_buffered();
 // when double buffering is unavailable. This is what stops the desktop from
 // flickering: callers draw a whole frame invisible, then flip it.
 void present();
+// Same as present() but copies only the given rectangle (clipped to the
+// screen). Used to flip a small changed area, such as the mouse pointer,
+// without moving the whole frame.
+void present_rect(std::uint32_t x, std::uint32_t y, std::uint32_t w, std::uint32_t h);
 
 bool is_available();
 

@@ -124,6 +124,12 @@ void present() {
     Framebuffer::present();
 }
 
+void present_rect(std::size_t x, std::size_t y, std::size_t width, std::size_t height) {
+    Framebuffer::present_rect(static_cast<std::uint32_t>(x), static_cast<std::uint32_t>(y),
+                              static_cast<std::uint32_t>(width),
+                              static_cast<std::uint32_t>(height));
+}
+
 void draw_text(std::size_t x, std::size_t y, const char* text, Color color,
                std::size_t scale, Font font) {
     (void)font;
