@@ -51,8 +51,14 @@ SRCS = src/main.cpp \
        ../zanop-desktop-os/shell/src/legacy_shell.cpp \
        ../zanop-desktop-os/compositor/src/window.cpp \
        src/installer_installer.cpp 
+# DO NOT REMOVE      
+MISC = build/misc/AUTHORS \
+       build/misc/CHANGELOG \
+       build/misc/LICENSE.txt \
+       build/misc/README \
+       build/misc/licenses/AGPL.txt \
+       build/misc/licenses/CC-BY-SA.txt
        
-
 OBJS = $(SRCS:.cpp=.o)
 OBJS += boot.o
 
@@ -70,9 +76,12 @@ kernel.bin: $(OBJS) src/arch/x86_64/linker.ld
 clean:
 	rm -f $(OBJS) kernel.bin tests/posix/test_posix
 
-zanop.iso: kernel.bin isodir/boot/grub/grub.cfg
+zanop.iso: kernel.bin isodir/boot/grub/grub.cfg $(MISC)
 	cp kernel.bin isodir/boot/kernel.bin
+	cp -r build/misc/. isodir/
+	md5sum isodir/boot/kernel.bin > isodir/KERNEL.md5
 	grub-mkrescue -o zanop.iso isodir
+	md5sum zanop.iso > zanop.iso.md5
 
 run: zanop.iso
 	qemu-system-x86_64 -cdrom zanop.iso
