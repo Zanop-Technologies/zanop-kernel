@@ -8,6 +8,7 @@ Cargo.lock
 *.bin
 *.o
 *.elf
+isodir/*.md5
 
 # Temp things
 TEMP.md
