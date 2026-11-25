@@ -39,6 +39,7 @@ Magic Cookie:
 
 3. REQUEST:
  - Request says: "Cool, I'll take `192.168.1.50`. Please confirm."
+ 
    > [!NOTE]
    > This confirms the specific IP that is offered.
 
