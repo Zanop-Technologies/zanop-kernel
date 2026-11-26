@@ -120,8 +120,34 @@ void draw_rgb_bitmap(std::size_t x, std::size_t y, std::size_t width,
                                  static_cast<std::uint32_t>(height), pixels);
 }
 
+namespace {
+void (*present_hook)() = nullptr;
+bool in_present_hook = false;
+
+// Runs the hook after a flip. The hook may itself flip (present_rect), so it
+// is not re-entered.
+void run_present_hook() {
+    if (present_hook == nullptr || in_present_hook) return;
+    in_present_hook = true;
+    present_hook();
+    in_present_hook = false;
+}
+} // namespace
+
+void set_present_hook(void (*hook)()) {
+    present_hook = hook;
+}
+
 void present() {
     Framebuffer::present();
+    run_present_hook();
+}
+
+void present_rect(std::size_t x, std::size_t y, std::size_t width, std::size_t height) {
+    Framebuffer::present_rect(static_cast<std::uint32_t>(x), static_cast<std::uint32_t>(y),
+                              static_cast<std::uint32_t>(width),
+                              static_cast<std::uint32_t>(height));
+    run_present_hook();
 }
 
 void draw_text(std::size_t x, std::size_t y, const char* text, Color color,

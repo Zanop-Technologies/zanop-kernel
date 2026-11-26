@@ -119,6 +119,20 @@ void present() {
         }
     }
 }
+void present_rect(std::uint32_t x, std::uint32_t y, std::uint32_t w, std::uint32_t h) {
+    if (!double_buffered || back_buffer_used == nullptr || !available) return;
+    if (x >= info.width || y >= info.height) return;
+    if (w > info.width - x) w = info.width - x;
+    if (h > info.height - y) h = info.height - y;
+    if (w == 0 || h == 0) return;
+    for (std::uint32_t row = y; row < y + h; ++row) {
+        auto* dst = reinterpret_cast<std::uint32_t*>(
+            reinterpret_cast<std::uint8_t*>(info.addr) + row * info.pitch) + x;
+        const auto* src = reinterpret_cast<const std::uint32_t*>(
+            back_buffer_used + row * info.pitch) + x;
+        for (std::uint32_t i = 0; i < w; ++i) dst[i] = src[i];
+    }
+}
 void fill_rect(std::uint32_t x, std::uint32_t y, std::uint32_t w, std::uint32_t h,
                 std::uint8_t r, std::uint8_t g, std::uint8_t b) {
     if (!available) return;
