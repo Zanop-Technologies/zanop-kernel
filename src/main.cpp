@@ -12,6 +12,10 @@
 #include "framebuffer/multiboot.hpp"
 #include "fs/fs.hpp"
 #include "posix/posix.hpp"
+#include "arch/x86_64/usermode.hpp"
+#ifdef ZANOP_SELFTEST
+#include "posix/selftest.hpp"
+#endif
 #include "panic.hpp"
 #include "../../zanop-desktop-os/installer/src/installer.hpp"
 #include "../../zanop-desktop-os/compositor/src/surface.hpp"
@@ -102,6 +106,10 @@ void kernel_main(std::uint64_t multiboot_info_addr) {
     draw_boot_progress(false, 78, "NETWORK READY");
     FS::init();
     posix::init_kernel();
+    Arch::UserMode::init();
+#ifdef ZANOP_SELFTEST
+    posix::selftest();
+#endif
     draw_boot_progress(false, 84, "FILESYSTEM READY");
 
     bool has_gfx = Framebuffer::init(multiboot_info_addr);

@@ -21,9 +21,25 @@ struct __attribute__((packed)) IdtPointer {
 constexpr size_t IDT_ENTRIES = 256;
 static IdtEntry idt[IDT_ENTRIES] __attribute__((aligned(16)));
 
+static void set_gate(size_t vector, uint64_t handler) {
+    idt[vector].offset_low = static_cast<uint16_t>(handler);
+    idt[vector].selector = 0x08;
+    idt[vector].ist = 0;
+    idt[vector].type_attr = 0x8E;
+    idt[vector].offset_mid = static_cast<uint16_t>(handler >> 16);
+    idt[vector].offset_high = static_cast<uint32_t>(handler >> 32);
+    idt[vector].zero = 0;
+}
+
 void init() {
     for (size_t index = 0; index < IDT_ENTRIES; ++index) {
         idt[index] = {};
+    }
+
+    // CPU exceptions 0..31 (stubs in usermode.asm). Without these a fault
+    // triple-faults and silently resets the machine.
+    for (size_t vector = 0; vector < 32; ++vector) {
+        set_gate(vector, zanop_exception_stubs[vector]);
     }
 
     uint64_t handler = reinterpret_cast<uint64_t>(isr33);

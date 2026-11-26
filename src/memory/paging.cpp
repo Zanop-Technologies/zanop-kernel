@@ -6,6 +6,7 @@ namespace Paging {
 namespace {
 constexpr uint64_t PRESENT = 1;
 constexpr uint64_t WRITABLE = 2;
+constexpr uint64_t USER = 1ull << 2;
 constexpr uint64_t HUGE_PAGE = 1ull << 7;
 constexpr uintptr_t ADDRESS_MASK = 0x000FFFFFFFFFF000ull;
 uint64_t* root = nullptr;
@@ -71,6 +72,24 @@ bool unmap_page(uintptr_t virtual_address) {
     if (!(leaf & PRESENT)) return false;
     leaf = 0;
     __asm__ volatile("invlpg (%0)" :: "r"(virtual_address) : "memory");
+    return true;
+}
+
+bool make_user_accessible(uintptr_t virtual_address) {
+    if (!root || (virtual_address & (LARGE_PAGE_SIZE - 1))) return false;
+    uint64_t& l4 = root[(virtual_address >> 39) & 0x1FF];
+    if (!(l4 & PRESENT)) return false;
+    uint64_t* l3_table = reinterpret_cast<uint64_t*>(static_cast<uintptr_t>(l4 & ADDRESS_MASK));
+    uint64_t& l3 = l3_table[(virtual_address >> 30) & 0x1FF];
+    if (!(l3 & PRESENT) || (l3 & HUGE_PAGE)) return false;
+    uint64_t* l2_table = reinterpret_cast<uint64_t*>(static_cast<uintptr_t>(l3 & ADDRESS_MASK));
+    uint64_t& l2 = l2_table[(virtual_address >> 21) & 0x1FF];
+    if (!(l2 & PRESENT) || !(l2 & HUGE_PAGE)) return false;
+    l4 |= USER;
+    l3 |= USER;
+    l2 |= USER;
+    // Reload CR3: flushes every cached translation for the changed entries.
+    __asm__ volatile("mov %%cr3, %%rax\n\tmov %%rax, %%cr3" ::: "rax", "memory");
     return true;
 }
 

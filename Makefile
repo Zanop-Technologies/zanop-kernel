@@ -16,6 +16,7 @@ SRCS = src/main.cpp \
        src/arch/x86_64/pic.cpp \
        src/arch/x86_64/idt.cpp \
        src/arch/x86_64/mod.cpp \
+       src/arch/x86_64/usermode.cpp \
        src/net/arp.cpp \
        src/fs/fs.cpp \
        src/memory/allocator.cpp \
@@ -58,13 +59,26 @@ MISC = build/misc/AUTHORS \
        build/misc/README \
        build/misc/licenses/AGPL.txt \
        build/misc/licenses/CC-BY-SA.txt
-       
+
+# `make selftest` builds a kernel that runs the POSIX/ring-3 self-test at boot.
+ifdef ZANOP_SELFTEST
+CXXFLAGS += -DZANOP_SELFTEST
+SRCS += src/posix/selftest.cpp
+SELFTEST_OBJS = user_programs.o
+endif
+
 OBJS = $(SRCS:.cpp=.o)
-OBJS += boot.o
+OBJS += boot.o usermode_asm.o $(SELFTEST_OBJS)
 
 all: kernel.bin
 
 boot.o: src/arch/x86_64/boot.asm
+	$(AS) -f elf64 $< -o $@
+
+usermode_asm.o: src/arch/x86_64/usermode.asm
+	$(AS) -f elf64 $< -o $@
+
+user_programs.o: src/posix/user_programs.asm
 	$(AS) -f elf64 $< -o $@
 
 %.o: %.cpp
@@ -74,7 +88,7 @@ kernel.bin: $(OBJS) src/arch/x86_64/linker.ld
 	$(LD) -T src/arch/x86_64/linker.ld -o $@ $(OBJS)
 
 clean:
-	rm -f $(OBJS) kernel.bin tests/posix/test_posix
+	rm -f $(OBJS) usermode_asm.o user_programs.o kernel.bin tests/posix/test_posix
 
 zanop.iso: kernel.bin isodir/boot/grub/grub.cfg $(MISC)
 	cp kernel.bin isodir/boot/kernel.bin
@@ -96,4 +110,18 @@ tests/posix/test_posix: tests/posix/test_posix.cpp src/posix/posix.cpp src/posix
 test-posix: tests/posix/test_posix
 	./tests/posix/test_posix
 
-.PHONY: all clean run test-posix
+# Boot self-test: kernel-mode syscalls against a real disk, then ring-3 programs.
+# Needs QEMU and 1 GiB of RAM. Output appears on the serial console (this terminal).
+# Run `make clean` afterwards to go back to a normal build.
+SELFTEST_DISK ?= selftest-disk.img
+
+selftest:
+	$(MAKE) clean
+	$(MAKE) ZANOP_SELFTEST=1 zanop.iso
+
+run-selftest: selftest
+	qemu-img create -f raw $(SELFTEST_DISK) 64M
+	qemu-system-x86_64 -cdrom zanop.iso -drive file=$(SELFTEST_DISK),format=raw,if=ide \
+		-boot d -m 1024 -serial stdio
+
+.PHONY: all clean run test-posix selftest run-selftest

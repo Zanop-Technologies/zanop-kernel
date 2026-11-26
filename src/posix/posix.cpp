@@ -48,6 +48,13 @@ Proc procs[MAX_PROCS];
 Map maps[MAX_MAPS];
 u32 umask_value = 022;
 
+// While a ring-3 program runs, pointers it passes are checked against its
+// memory region and its descriptors live under a virtual process id.
+bool in_user = false;
+u32 user_pid = 0;
+u64 user_lo = 0;
+u64 user_hi = 0;
+
 // ---- small helpers (no libc in the kernel) --------------------------------
 
 usize str_len(const char* s) {
@@ -71,8 +78,31 @@ void zero(void* p, usize n) {
     for (usize i = 0; i < n; ++i) b[i] = 0;
 }
 
-// Single place to add real user-pointer validation once ring 3 exists.
-bool user_ok(const void* p, usize) { return p != nullptr; }
+// Validates a pointer handed in by a caller. Kernel callers only need to be
+// non-null; a ring-3 program may only reach its own region, so a pointer into
+// kernel memory is refused instead of being dereferenced on its behalf.
+bool user_ok(const void* p, usize n) {
+    if (p == nullptr) return false;
+    if (!in_user) return true;
+    const u64 a = reinterpret_cast<u64>(p);
+    if (a < user_lo || a >= user_hi) return false;
+    return n <= user_hi - a;
+}
+
+// Like user_ok for a NUL-terminated string: the terminator must lie inside the
+// region too, or reading it would run past the end.
+bool user_cstr_ok(const char* s) {
+    if (s == nullptr) return false;
+    if (!in_user) return true;
+    const u64 a = reinterpret_cast<u64>(s);
+    if (a < user_lo || a >= user_hi) return false;
+    for (u64 i = a; i < user_hi; ++i)
+        if (*reinterpret_cast<const char*>(i) == '\0') return true;
+    return false;
+}
+
+u32 current_pid() { return in_user ? user_pid : be->cur_pid(); }
+bool pid_is_alive(u32 pid) { return (in_user && pid == user_pid) || be->pid_alive(pid); }
 
 void put_u16(u8* d, u16 v) { d[0] = static_cast<u8>(v); d[1] = static_cast<u8>(v >> 8); }
 void put_u64(u8* d, u64 v) { for (int i = 0; i < 8; ++i) d[i] = static_cast<u8>(v >> (8 * i)); }
@@ -105,7 +135,7 @@ i64 apply(char* out, usize& len, const char* s) {
 }
 
 i64 resolve(const Proc& p, const char* path, char* out) {
-    if (!user_ok(path, 1)) return -err::FAULT;
+    if (!user_cstr_ok(path)) return -err::FAULT;
     if (path[0] == '\0') return -err::NOENT;
     usize len = 1;
     out[0] = '/';
@@ -162,7 +192,7 @@ Proc* proc_for(u32 pid) {
         if (pass == 1) {
             // Table full: reclaim processes that have gone away.
             for (Proc& p : procs)
-                if (p.used && !be->pid_alive(p.pid)) drop(p);
+                if (p.used && !pid_is_alive(p.pid)) drop(p);
         }
         for (Proc& p : procs) {
             if (p.used) continue;
@@ -582,6 +612,7 @@ i64 sys_ioctl(Proc& p, i64 fd, u64 req, u64 arg) {
     if (!o) return -err::BADF;
     if (!is_console(*o)) return -err::NOTTY;
     if (req == ioc::TCGETS) {
+        if (arg && !user_ok(reinterpret_cast<void*>(arg), 36)) return -err::FAULT;
         if (arg) zero(reinterpret_cast<void*>(arg), 36); // struct termios
         return 0;
     }
@@ -601,6 +632,9 @@ i64 sys_ioctl(Proc& p, i64 fd, u64 req, u64 arg) {
 
 i64 sys_mmap(u64 len, u64 flags, i64 fd) {
     if (len == 0 || len > 0x7FFFFFFF) return -err::INVAL;
+    // A ring-3 program has one fixed region and no per-process page tables to
+    // map more memory into, so mapping from it waits for those.
+    if (in_user) return -err::NOSYS;
     if (!(flags & mmapf::ANONYMOUS)) return -err::NODEV; // file mappings: not yet
     if (!(flags & mmapf::PRIVATE) || (flags & 0x10 /* MAP_FIXED */)) return -err::INVAL;
     if (fd != -1) return -err::INVAL;
@@ -648,7 +682,7 @@ i64 sys_uname(UtsName* u) {
 i64 sys_kill(i64 pid, i64 sig) {
     if (sig < 0 || sig > 64) return -err::INVAL;
     if (pid <= 0) return -err::SRCH; // process groups: not supported
-    if (!be->pid_alive(static_cast<u32>(pid))) return -err::SRCH;
+    if (!pid_is_alive(static_cast<u32>(pid))) return -err::SRCH;
     if (sig == 0) return 0;
     return be->proc_kill(static_cast<u32>(pid), static_cast<int>(sig));
 }
@@ -668,6 +702,7 @@ void init(const Backend* backend) {
     zero(procs, sizeof(procs));
     zero(maps, sizeof(maps));
     umask_value = 022;
+    in_user = false;
     ofds[0].kind = Kind::ConsoleIn;
     ofds[0].flags = oflag::RDONLY;
     ofds[0].refs = 1;
@@ -679,6 +714,21 @@ void init(const Backend* backend) {
     ofds[2].refs = 1;
 }
 
+void enter_user_context(u32 pid, u64 lo, u64 hi) {
+    in_user = true;
+    user_pid = pid;
+    user_lo = lo;
+    user_hi = hi;
+}
+
+void leave_user_context() {
+    if (in_user) reap(user_pid);
+    in_user = false;
+    user_pid = 0;
+}
+
+bool in_user_context() { return in_user; }
+
 void reap(u32 pid) {
     for (Proc& p : procs)
         if (p.used && p.pid == pid) drop(p);
@@ -687,7 +737,7 @@ void reap(u32 pid) {
 i64 syscall(u64 number, u64 a1, u64 a2, u64 a3, u64 a4, u64 a5, u64 a6) {
     (void)a6;
     if (!be) return -err::NOSYS;
-    const u32 pid = be->cur_pid();
+    const u32 pid = current_pid();
     if (number == nr::GETPID || number == nr::SET_TID_ADDRESS) return pid;
     if (number == nr::GETPPID) return 1;
     Proc* pp = proc_for(pid);
@@ -739,6 +789,10 @@ i64 syscall(u64 number, u64 a1, u64 a2, u64 a3, u64 a4, u64 a5, u64 a6) {
     case nr::KILL: return sys_kill(static_cast<i64>(static_cast<i32>(a1)), static_cast<i64>(static_cast<i32>(a2)));
     case nr::EXIT:
     case nr::EXIT_GROUP: {
+        if (in_user) { // the ring-3 entry code ends the program; just drop its state
+            reap(pid);
+            return 0;
+        }
         const i64 r = be->proc_exit(pid, static_cast<int>(a1));
         if (r >= 0) reap(pid);
         return r;
