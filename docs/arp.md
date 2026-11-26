@@ -31,6 +31,8 @@
 **The Reply:** Only the device with the matching Target IP responds. It sends a **Unicast** ARP reply directly back to the sender's MAC address.
 
 ## ARP Cache
+
+> [!TIP]
 > *Do not send an ARP request for every single packet.*
 
 **The Table:** Store resolved `IP —> MAC` mappings in a table (e.g., a hash map or array).
