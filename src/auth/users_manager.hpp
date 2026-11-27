@@ -14,12 +14,12 @@ namespace users {
 	
 	bool createUser(const char* userName, const char* hashPassword);
 	
-	bool dropUser(uint16_t userId);
+	bool dropUser(UserHandle handle);
 	
-	bool setUserRole(uint16_t userId, Roles role);
+	bool setUserRole(UserHandle handle, Roles role);
 	
-	bool setUserName(uint16_t userId, const char* userName);
+	bool setUserName(UserHandle handle, const char* userName);
 	
-	bool setUserHashPassword(uint16_t userId, const char* hashPassword);
+	bool setUserHashPassword(UserHandle handle, const char* hashPassword);
 	
 }
