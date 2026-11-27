@@ -27,7 +27,7 @@ inline void* memcpy(void* destination, const void* source, size_t count) {
 }
 
 inline size_t strnlen(const char* string, size_t maxLen) {
-	size_t length = 0
+	size_t length = 0;
 	while (length < maxLen && string[length] != '\0') {
 		++length;
 	}
@@ -52,13 +52,9 @@ inline int strcmp(const char* left, const char* right) {
 
 inline char* strncpy(char* destination, const char* source, size_t maxLen) {
 	const size_t srcLen = strnlen(source, maxLen);
-	if (srcLen < maxLen) {
-		memcpy(destination, source, srcLen);
+	memcpy(destination, source, srcLen);
+	if (srcLen < maxLen)
 		memset(destination + source, 0, maxLen - srcLen);
-	}
-	else {
-		memcpy(destination, source, srcLen);
-	}
 	return destination;
 }
 
