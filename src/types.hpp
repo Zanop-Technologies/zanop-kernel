@@ -17,12 +17,55 @@ inline void* memset(void* destination, int value, size_t count) {
 	return destination;
 }
 
+inline void* memcpy(void* destination, const void* source, size_t count) {
+	uint8_t* dest = static_cast<uint8_t*>(destination);
+	const uint8_t* src = static_cast<const uint8_t*>(source);
+	for (size_t index=0; index<count; ++index) {
+		dest[index] = src[index];
+	}
+	return destination;
+}
+
+inline size_t strnlen(const char* string, size_t maxLen) {
+	size_t length = 0
+	while (length < maxLen && string[length] != '\0') {
+		++length;
+	}
+	return length;
+}
+
+inline size_t strlen(const char* string) {
+	size_t length = 0;
+	while (string[length] != '\0') {
+		++length;
+	}
+	return length;
+}
+
 inline int strcmp(const char* left, const char* right) {
 	while (*left && *left == *right) {
 		++left;
 		++right;
 	}
 	return static_cast<unsigned char>(*left) - static_cast<unsigned char>(*right);
+}
+
+inline char* strncpy(char* destination, const char* source, size_t maxLen) {
+	const size_t srcLen = strnlen(source, maxLen);
+	if (srcLen < maxLen) {
+		memcpy(destination, source, srcLen);
+		memset(destination + source, 0, maxLen - srcLen);
+	}
+	else {
+		memcpy(destination, source, srcLen);
+	}
+	return destination;
+}
+
+inline char* strcpy(char* destination, const char* source) {
+	const size_t length = strlen(source);
+	memcpy(destination, source, length+1);
+	return destination;
 }
 
 namespace std {
