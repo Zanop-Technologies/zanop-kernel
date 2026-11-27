@@ -58,10 +58,14 @@ inline char* strncpy(char* destination, const char* source, size_t maxLen) {
 	return destination;
 }
 
-inline char* strcpy(char* destination, const char* source) {
-	const size_t length = strlen(source);
-	memcpy(destination, source, length+1);
-	return destination;
+inline char* strcpy(char* destination, const char* source, size_t destinationSize) {
+    if (destination == nullptr || source == nullptr || destinationSize == 0)
+        return nullptr;
+    const size_t length = strnlen(source, destinationSize);
+    if (length >= destinationSize)
+        return nullptr;
+    memcpy(destination, source, length + 1);
+    return destination;
 }
 
 namespace std {
