@@ -39,9 +39,7 @@ SRCS = src/main.cpp \
        src/apps/calculator.cpp \
        src/apps/snake.cpp \
        src/apps/notes.cpp \
-	   src/auth/users.hpp \
-	   src/auth/users_manager.hpp \
-	   src/auth/users_manager.cpp \
+       src/auth/users_manager.cpp \
        src/compositor_surface.cpp \
        ../zanop-desktop-os/installer/src/installer.cpp \
        ../zanop-desktop-os/installer/src/vga_font.cpp \
