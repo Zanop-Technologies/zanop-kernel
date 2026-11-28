@@ -1,9 +1,10 @@
+#include "../types.hpp"
 #include "users.hpp"
-#include "user_manager.hpp"
+#include "users_manager.hpp"
 
 struct UserSlot {
 	
-	User currentUser;
+	users::User currentUser;
 	bool isActive;
 	bool isRetired;
 	uint16_t generation;
@@ -42,9 +43,9 @@ namespace users {
 			return false;
 		users::User user{};
 		user.userId = nextUserId;
-		if (strcpy(user.userName, userName, sizeof(user.userName)) == nullptr)
+		if (strcpy_s(user.userName, userName, sizeof(user.userName)) == nullptr)
 			return false;
-		if (strcpy(user.hashPassword, hashPassword, sizeof(user.hashPassword)) == nullptr)
+		if (strcpy_s(user.hashPassword, hashPassword, sizeof(user.hashPassword)) == nullptr)
 			return false;
 		user.role = users::Roles::USER;
 		usersTable[freeSlot].currentUser = user;
@@ -104,7 +105,7 @@ namespace users {
 	}
 	
 	bool pullUser(UserHandle handle, User& output) {
-		if (!handle.slot >= MAX_USERS)
+		if (handle.slot >= MAX_USERS)
 			return false;
 		if (!usersTable[handle.slot].isActive)
 			return false;
@@ -148,7 +149,7 @@ namespace users {
 			if (strcmp(userName, usersTable[index].currentUser.userName) == 0)
 				return false;
 		}
-		if (strcpy(usersTable[handle.slot].currentUser.userName, userName, sizeof(usersTable[handle.slot].currentUser.userName)) == nullptr)
+		if (strcpy_s(usersTable[handle.slot].currentUser.userName, userName, sizeof(usersTable[handle.slot].currentUser.userName)) == nullptr)
 			return false;
 		return true;
 	}

@@ -4,15 +4,6 @@
 // NOTE: relative path above assumes zanop-desktop-os and zanop-kernel
 // sit as sibling folders. Adjust if your local layout differs.
 
-extern "C" void* memcpy(void* destination, const void* source, std::size_t count) {
-    auto* dst = static_cast<unsigned char*>(destination);
-    auto* src = static_cast<const unsigned char*>(source);
-    for (std::size_t i = 0; i < count; ++i) {
-        dst[i] = src[i];
-    }
-    return destination;
-}
-
 namespace surface {
 
 namespace {
